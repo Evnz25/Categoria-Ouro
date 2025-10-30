@@ -50,9 +50,9 @@ class Model():
             return None
         
     
-    def listar_registros_filtrado(self, categoriaFiltro):
+    def listar_registros_filtrado(self, categoria_filtro):
         try:
-            return list(self.registros.find(categoriaFiltro).sort("Idade", -1))
+            return list(self.registros.find(categoria_filtro).sort("Idade", -1))
         except Exception as e:
             print(f"Erro ao filtrar os dados {e}")
             return None
