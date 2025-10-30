@@ -31,6 +31,7 @@ class Model():
             print(f"Erro ao inserir os dados {e}")
             return None
 
+
     def mostrar_registro_id(self, registro_id):
         try:
             obj_id = Objectid(registro_id)
@@ -47,18 +48,46 @@ class Model():
         except Exception as e:
             print(f"Erro ao buscar dados dos registros: {e}")
             return None
+        
     
+    def listar_registros_filtrado(self, categoriaFiltro):
+        try:
+            return list(self.registros.find(categoriaFiltro).sort("Idade", -1))
+        except Exception as e:
+            print(f"Erro ao filtrar os dados {e}")
+            return None
+    
+
+    def atualizar_registro(self, registro_id, salvar_nome, salvar_idade, salvar_peso, salvar_altura, salvar_flexibiliade, salvar_abdominal, salvar_arremesso, salvar_salto_horizontal, salvar_salto_vertical, salvar_quadrado, salvar_classificacao):
+        try: 
+            obj_id = Objectid(registro_id)
+            filtro = {"_id": obj_id}
+            atualizar_dados = {"$set": {"Nome": salvar_nome,
+                "Idade": salvar_idade,
+                "Peso": salvar_peso,
+                "Altura": salvar_altura,
+                "Flexibilidade": salvar_flexibiliade,
+                "Abdominal": salvar_abdominal,
+                "Arremesso": salvar_arremesso,
+                "SaltoHor": salvar_salto_horizontal,
+                "SaltoVer": salvar_salto_vertical,
+                "Quadrado": salvar_quadrado,
+                "Classificacao": salvar_classificacao}}
+            atualizacao = self.registros.update_one(filtro, atualizar_dados)
+            return atualizacao
+        except Exception as e:
+            print(f"Erro ao atulizar o registro: {e}")
+            return None
+
 
     def deletar_registro(self, registro_id):
         try:
             obj_id = Objectid(registro_id)
             exclusao = self.registro.delete_one({"_id": obj_id})
-            return True
+            return exclusao
         except Exception as e:
             print(f"Erro ao deletar o registro: {e}")
             return None 
-    
-       
 
 
 
