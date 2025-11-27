@@ -41,9 +41,132 @@ class View():
         form_container = ttk.Frame(self.tela_insercao)
         form_container.pack(padx=40, pady=20, fill='x')
 
-        ttk.Label(form_container, text="Nome").grid(row=0, column=0, sticky='w', pady=5)
+        ttk.Label(form_container, text="NOME").grid(row=0, column=0, sticky='w', pady=5)
         self.entryNome = ttk.Entry(form_container)
         self.entryNome.grid(row=1, column=1, columnspan=2, sticky="ew", padx=(0,2))
 
+        ttk.Label(form_container, text="IDADE").grid(row=1, column=1, sticky='w', pady=5)
+        self.entryIdade = ttk.Entry(form_container)
+        self.entryIdade.grid(row=2, column=1, columnspan=2, sticky="ew", padx=(0,2))
 
-        ttk.Label(form_container, text="Idade").grid(row=1, column=1)
+        ttk.Label(form_container, text="PESO").grid(row=1, column=1, sticky='w', pady=5)
+        self.entryPeso = ttk.Entry(form_container)
+        self.entryPeso.grid(row=2, column=2, columnspan=2, sticky="ew", padx=(0,2))
+
+        ttk.Label(form_container, text="ALTURA").grid(row=1, column=1, sticky='w', pady=5)
+        self.entryAltura = ttk.Entry(form_container)
+        self.entryAltura.grid(row=2, column=3, columnspan=2, sticky="ew", padx=(0,2))
+
+        ttk.Label(form_container, text="FLEXIBILIDADE").grid(row=1, column=1, sticky='w', pady=5)
+        self.entryFlexibilidade = ttk.Entry(form_container)
+        self.entryFlexibilidade.grid(row=3, column=1, columnspan=2, sticky="ew", padx=(0,2))
+
+        ttk.Label(form_container, text="ABDOMINAL").grid(row=1, column=1, sticky='w', pady=5)
+        self.entryAbdominal = ttk.Entry(form_container)
+        self.entryAbdominal.grid(row=4, column=1, columnspan=2, sticky="ew", padx=(0,2))
+
+        ttk.Label(form_container, text="ARREMESSO").grid(row=1, column=1, sticky='w', pady=5)
+        self.entryArremesso = ttk.Entry(form_container)
+        self.entryArremesso.grid(row=5, column=1, columnspan=2, sticky="ew", padx=(0,2))
+
+        ttk.Label(form_container, text="SALTO HORIZONTAL").grid(row=1, column=1, sticky='w', pady=5)
+        self.entrySaltoHor = ttk.Entry(form_container)
+        self.entrySaltoHor.grid(row=6, column=1, columnspan=2, sticky="ew", padx=(0,2))
+
+        ttk.Label(form_container, text="SALTO VERTICAL").grid(row=1, column=1, sticky='w', pady=5)
+        self.entrySaltoVert = ttk.Entry(form_container)
+        self.entrySaltoVert.grid(row=7, column=1, columnspan=2, sticky="ew", padx=(0,2))
+
+        ttk.Label(form_container, text="QUADRADO 4x4").grid(row=1, column=1, sticky='w', pady=5)
+        self.entryQuadrado = ttk.Entry(form_container)
+        self.entryQuadrado.grid(row=8, column=1, columnspan=2, sticky="ew", padx=(0,2))
+
+        btn_voltar = ttk.Button(
+            self.tela_anotacao, 
+            text="Voltar para o Início", 
+            command=self.mostrar_tela_inicial)
+        btn_voltar.pack(side="bottom", pady=20)
+
+        self.btn_cadastrar = ttk.Button(
+            self.tela_anotacao, 
+            text="Calcular", 
+            command=self.calcular)
+        self.btn_cadastrar.pack(side="bottom", pady=20)
+
+        #btn de salvar
+
+    def criar_tela_registro(self):
+        self.tela_registro = tk.Frame(self.container, bg="#DBA457")
+        self.tela_registro.grid(row=0, column=0, sticky='nsew')
+
+        cabeçalho_frame = tk.Frame(self.tela_inicial, bg="#DBA457")
+        cabeçalho_frame.pack(pady=20, padx=40, fill='x')
+        
+        ttk.Label(cabeçalho_frame, text="REGISTROS", font=("Inter", 28, "bold"), background="#DBA457").pack(anchor='w')
+
+        frame_filtro = tk.Frame(self.tela_registro, bg="#DBA457")
+        frame_filtro.pack(fill='x', padx=40, pady=10)
+
+        ttk.Label(frame_filtro, text="CATEGORIA", font=("Inter", 10, "bold"), background="#DBA457").pack(anchor='w')
+
+        linha_filtro = tk.Frame(frame_filtro, bg="#DBA457")
+        linha_filtro.pack(fill='x', pady=5)
+
+        self.combo_categoria = ttk.Combobox(linha_filtro, values=["GERAL", "FUTEBOL", "VOLEI", "BASQUETE", "CAPOEIRA"])
+        self.combo_categoria.current(0) 
+        self.combo_categoria.pack(side='left', ipadx=20)
+
+        btn_filtrar = tk.Button(
+            linha_filtro, 
+            text="FILTRAR", 
+            bg="#333333", 
+            fg="white", 
+            bd=0,
+            padx=15
+        )
+        btn_filtrar.pack(side='left', padx=10)
+
+        self.area_resultados = tk.Frame(self.tela_registro, bg="#DBA457")
+        self.area_resultados.pack(fill='both', expand=True, padx=40, pady=20)
+
+        card = tk.Frame(self.area_resultados, bg="white")
+        card.pack(fill='x', pady=5) 
+
+        infos_card = tk.Frame(card, bg="white")
+        infos_card.pack(side='left', padx=15, pady=10)
+
+        tk.Label(infos_card, text="NOME : EVANDRO NICOLAU ZANELLI", bg="white", anchor="w").pack(fill='x')
+        tk.Label(infos_card, text="IDADE : 19", bg="white", anchor="w").pack(fill='x')
+        tk.Label(infos_card, text="CLASSIFICAÇÃO: FUTEBOL", bg="white", anchor="w").pack(fill='x')
+
+        btn_excluir = tk.Button(
+            card, 
+            text="EXCLUIR", 
+            bg="#333333", 
+            fg="white",
+            bd=0,
+            padx=10,
+            pady=5
+        )
+        btn_excluir.pack(side='right', padx=15)
+
+        btn_voltar = tk.Button(
+            self.tela_registro, 
+            text="VOLTAR", 
+            bg="#333333", 
+            fg="white",
+            bd=0,
+            padx=20,
+            pady=10,
+            command=self.criar_tela_inicial 
+        )
+        btn_voltar.pack(side='bottom', anchor='w', padx=40, pady=40)
+
+        def mostrar_tela_inicial(self):
+            self.tela_inicial.tkraise()
+
+        def mostrar_tela_insercao(self):
+            self.tela_insercao.tkraise()
+
+        def mostrar_tela_registro(self):
+            self.tela_registro.tkraise() 
