@@ -17,6 +17,14 @@ class View():
         self.container.grid_rowconfigure(0, weight=1)
         self.container.grid_columnconfigure(0, weight=1)
 
+        self.criar_tela_inicial()
+        self.criar_tela_insercao()
+        self.criar_tela_registro()
+
+        self.mostrar_tela_inicial()
+
+        self.root.mainloop()
+
     def criar_tela_inicial(self):
         self.tela_inicial = tk.Frame(self.container, bg="#DBA457")
         self.tela_inicial.grid(row=0, column=0, sticky='nsew')
@@ -29,8 +37,21 @@ class View():
         botoes_frame = tk.Frame(cabecalho_frame, bg="#DBA457")
         botoes_frame.pack(anchor='w', pady=15)
 
-        ttk.Button(botoes_frame, text="CALCULAR", command=self.mostrar).pack(side="left")
-        ttk.Button(botoes_frame, text="REGISTROS", command=self.mostrar).pack(side="left", padx=10)
+        tk.Button(botoes_frame, 
+            text="CALCULAR", 
+            bg="#333333", 
+            fg="white",
+            font=("Inter", 10, "bold"),
+            command=self.mostrar_tela_insercao,
+            bd=0, padx=20, pady=8,).pack(side="left")
+        
+        tk.Button(botoes_frame,
+            text="REGISTROS",
+            bg="#333333", 
+            fg="white",
+            font=("Inter", 10, "bold"),
+            bd=0, padx=20, pady=8,
+            command=self.mostrar_tela_registro).pack(side="left", padx=10)
 
         tk.Frame(self.tela_inicial, height=10, bg="black").pack(fill='x')
 
@@ -38,60 +59,82 @@ class View():
         self.tela_insercao = tk.Frame(self.container, bg="#DBA457")
         self.tela_insercao.grid(row=0, column=0, sticky='nsew')
 
-        form_container = ttk.Frame(self.tela_insercao)
-        form_container.pack(padx=40, pady=20, fill='x')
+        form_container = tk.Frame(self.tela_insercao, bg="#DBA457")
+        form_container.pack(padx=40, pady=20, fill='both', expand=True)
 
-        ttk.Label(form_container, text="NOME").grid(row=0, column=0, sticky='w', pady=5)
+        lbl_config = {"bg": "#DBA457", "font": ("Inter", 10), "anchor": "w"}
+
+        tk.Label(form_container, text="NOME :", **lbl_config).grid(row=0, column=0, sticky='w', pady=10)
         self.entryNome = ttk.Entry(form_container)
-        self.entryNome.grid(row=1, column=1, columnspan=2, sticky="ew", padx=(0,2))
+        self.entryNome.grid(row=0, column=1, sticky="ew", padx=10)
+        
+        form_container.grid_columnconfigure(1, weight=1)
 
-        ttk.Label(form_container, text="IDADE").grid(row=1, column=1, sticky='w', pady=5)
-        self.entryIdade = ttk.Entry(form_container)
-        self.entryIdade.grid(row=2, column=1, columnspan=2, sticky="ew", padx=(0,2))
+        frame_medidas = tk.Frame(form_container, bg="#DBA457")
+        frame_medidas.grid(row=1, column=0, columnspan=2, sticky='w', pady=10)
 
-        ttk.Label(form_container, text="PESO").grid(row=1, column=1, sticky='w', pady=5)
-        self.entryPeso = ttk.Entry(form_container)
-        self.entryPeso.grid(row=2, column=2, columnspan=2, sticky="ew", padx=(0,2))
+        tk.Label(frame_medidas, text="IDADE :", **lbl_config).pack(side="left")
+        self.entryIdade = ttk.Entry(frame_medidas, width=5)
+        self.entryIdade.pack(side="left", padx=(5, 20))
 
-        ttk.Label(form_container, text="ALTURA").grid(row=1, column=1, sticky='w', pady=5)
-        self.entryAltura = ttk.Entry(form_container)
-        self.entryAltura.grid(row=2, column=3, columnspan=2, sticky="ew", padx=(0,2))
+        tk.Label(frame_medidas, text="PESO :", **lbl_config).pack(side="left")
+        self.entryPeso = ttk.Entry(frame_medidas, width=8)
+        self.entryPeso.pack(side="left", padx=(5, 20))
 
-        ttk.Label(form_container, text="FLEXIBILIDADE").grid(row=1, column=1, sticky='w', pady=5)
-        self.entryFlexibilidade = ttk.Entry(form_container)
-        self.entryFlexibilidade.grid(row=3, column=1, columnspan=2, sticky="ew", padx=(0,2))
+        tk.Label(frame_medidas, text="ALTURA :", **lbl_config).pack(side="left")
+        self.entryAltura = ttk.Entry(frame_medidas, width=8)
+        self.entryAltura.pack(side="left", padx=(5, 0))
 
-        ttk.Label(form_container, text="ABDOMINAL").grid(row=1, column=1, sticky='w', pady=5)
-        self.entryAbdominal = ttk.Entry(form_container)
-        self.entryAbdominal.grid(row=4, column=1, columnspan=2, sticky="ew", padx=(0,2))
+        tk.Label(form_container, text="FLEXIBILIDADE :", **lbl_config).grid(row=2, column=0, sticky='w', pady=10)
+        self.entryFlexibilidade = ttk.Entry(form_container, width=15) # Menorzinha igual a foto
+        self.entryFlexibilidade.grid(row=2, column=1, sticky="w", padx=10)
 
-        ttk.Label(form_container, text="ARREMESSO").grid(row=1, column=1, sticky='w', pady=5)
-        self.entryArremesso = ttk.Entry(form_container)
-        self.entryArremesso.grid(row=5, column=1, columnspan=2, sticky="ew", padx=(0,2))
+        tk.Label(form_container, text="ABDOMINAL :", **lbl_config).grid(row=3, column=0, sticky='w', pady=10)
+        self.entryAbdominal = ttk.Entry(form_container, width=10)
+        self.entryAbdominal.grid(row=3, column=1, sticky="w", padx=10)
 
-        ttk.Label(form_container, text="SALTO HORIZONTAL").grid(row=1, column=1, sticky='w', pady=5)
-        self.entrySaltoHor = ttk.Entry(form_container)
-        self.entrySaltoHor.grid(row=6, column=1, columnspan=2, sticky="ew", padx=(0,2))
+        tk.Label(form_container, text="ARREMESSO (Medical Ball):", **lbl_config).grid(row=4, column=0, sticky='w', pady=10)
+        self.entryArremesso = ttk.Entry(form_container, width=10)
+        self.entryArremesso.grid(row=4, column=1, sticky="w", padx=10)
 
-        ttk.Label(form_container, text="SALTO VERTICAL").grid(row=1, column=1, sticky='w', pady=5)
-        self.entrySaltoVert = ttk.Entry(form_container)
-        self.entrySaltoVert.grid(row=7, column=1, columnspan=2, sticky="ew", padx=(0,2))
+        tk.Label(form_container, text="SALTO HORIZONTAL:", **lbl_config).grid(row=5, column=0, sticky='w', pady=10)
+        self.entrySaltoHor = ttk.Entry(form_container, width=25)
+        self.entrySaltoHor.grid(row=5, column=1, sticky="w", padx=10)
 
-        ttk.Label(form_container, text="QUADRADO 4x4").grid(row=1, column=1, sticky='w', pady=5)
-        self.entryQuadrado = ttk.Entry(form_container)
-        self.entryQuadrado.grid(row=8, column=1, columnspan=2, sticky="ew", padx=(0,2))
+        tk.Label(form_container, text="SALTO VERTICAL:", **lbl_config).grid(row=6, column=0, sticky='w', pady=10)
+        self.entrySaltoVert = ttk.Entry(form_container, width=25)
+        self.entrySaltoVert.grid(row=6, column=1, sticky="w", padx=10)
 
-        btn_voltar = ttk.Button(
-            self.tela_anotacao, 
-            text="Voltar para o Início", 
-            command=self.mostrar_tela_inicial)
-        btn_voltar.pack(side="bottom", pady=20)
+        tk.Label(form_container, text="QUADRADO 4x4M :", **lbl_config).grid(row=7, column=0, sticky='w', pady=10)
+        self.entryQuadrado = ttk.Entry(form_container, width=25)
+        self.entryQuadrado.grid(row=7, column=1, sticky="w", padx=10)
 
-        self.btn_cadastrar = ttk.Button(
-            self.tela_anotacao, 
-            text="Calcular", 
-            command=self.calcular)
-        self.btn_cadastrar.pack(side="bottom", pady=20)
+        tk.Label(form_container, text="CLASSIFICAÇÃO:", **lbl_config).grid(row=8, column=0, sticky='w', pady=10)
+
+        botoes_frame = tk.Frame(self.tela_insercao, bg="#DBA457")
+        botoes_frame.pack(side="bottom", fill="x", padx=40, pady=30)
+
+        btn_voltar = tk.Button(
+            botoes_frame, 
+            text="VOLTAR", 
+            bg="#333333", 
+            fg="white",   
+            font=("Inter", 10, "bold"),
+            bd=0, padx=20, pady=8,
+            command=self.mostrar_tela_inicial
+        )
+        btn_voltar.pack(side="left")
+        
+        self.btn_cadastrar = tk.Button(
+            botoes_frame, 
+            text="CALCULAR", 
+            bg="#333333", 
+            fg="white",
+            font=("Inter", 10, "bold"),
+            bd=0, padx=20, pady=8,
+            command=self.calcular
+        )
+        self.btn_cadastrar.pack(side="right") 
 
         #btn de salvar
 
@@ -162,11 +205,18 @@ class View():
         )
         btn_voltar.pack(side='bottom', anchor='w', padx=40, pady=40)
 
-        def mostrar_tela_inicial(self):
-            self.tela_inicial.tkraise()
+    def mostrar_tela_inicial(self):
+        self.tela_inicial.tkraise()
 
-        def mostrar_tela_insercao(self):
-            self.tela_insercao.tkraise()
+    def mostrar_tela_insercao(self):
+        self.tela_insercao.tkraise()
 
-        def mostrar_tela_registro(self):
-            self.tela_registro.tkraise() 
+    def mostrar_tela_registro(self):
+        self.tela_registro.tkraise() 
+
+    def calcular(self):
+        pass  # Implementar a lógica de cálculo aqui
+
+
+if __name__ == "__main__":
+    app = View()
