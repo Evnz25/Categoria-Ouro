@@ -17,7 +17,7 @@ class Model():
 
         self.e0 = Elo_01(self) #valida vazio
         self.e1 = Elo_02(self) #Nome maiusculo
-        self.e2 = Elo_03(self) #Virgula para ponto
+        self.e2 = Elo_03(self) #Virgula para ponto  
         self.e3 = Elo_04(self) #texto -> float
 
         self.e0.set_next(self.e1)
@@ -41,9 +41,12 @@ class Model():
             print("AVISO: Arquivo 'cerebro_ia.pkl' não encontrado.")
 
 
-    def start(self, dados):
-        x = self.e0.run(dados)
-        return x
+    def processar_dados(self, dados):
+        try:
+            dados_limpos = self.e0.processar(dados)
+            return dados_limpos
+        except Exception as e:
+            return {"erro": str(e)}
 
 
     def salvar_registro(self, salvar_nome, salvar_idade, salvar_peso, salvar_altura, salvar_flexibiliade, salvar_abdominal, salvar_arremesso, salvar_salto_horizontal, salvar_salto_vertical, salvar_quadrado, salvar_classificacao):
@@ -128,7 +131,7 @@ class Model():
             return None 
         
         
-    def calcular_classificacao_ia(self, dados_novos_lista):
+    def calcular_classificacao_ia_sem_Cerebro(self, dados_novos_lista):
         try:
             cursor = self.registros.find({}, {"_id": 0, "Nome": 0, "Classificacao": 0})
             dados_treino = list(cursor)
@@ -187,20 +190,34 @@ class Model():
         if not self.ia_carregada:
             return "Erro: IA não treinada"
 
-        try:
-            # Transforma em array numpy
-            dados_array = np.array([dados_novos_lista])
+        if "erro" in dados_dict_limpos:
+            return f"Erro nos dados: {dados_dict_limpos['erro']}"
 
-            # Normalizar (usando a régua do treino)
+        try:
+            lista_ia = [
+                dados_dict_limpos["Peso"],
+                dados_dict_limpos["Altura"],
+                dados_dict_limpos["Flexibilidade"],
+                dados_dict_limpos["Abdominal"],
+                dados_dict_limpos["Arremesso"],
+                dados_dict_limpos["SaltoHor"],
+                dados_dict_limpos["SaltoVer"],
+                dados_dict_limpos["Quadrado"]
+            ]
+
+            # Transforma em array numpy
+            dados_array = np.array([lista_ia])
+
+            # Normalizar
             dados_scaled = self.scaler.transform(dados_array)
 
             # Aplicar Pesos
             dados_pond = dados_scaled * self.pesos
 
-            # Predizer (K-Means)
+            # Predizer
             cluster_id = self.kmeans.predict(dados_pond)[0]
 
-            # Traduzir ID para Nome
+            # Traduzir e Retornar
             return self.mapa_nomes[cluster_id]
 
         except Exception as e:

@@ -26,7 +26,7 @@ class Controller():
     def calcular_classificacao(self, dados_dicionario):
         try:
             # 1. Passa pela cadeia de limpeza (Elos)
-            dados_limpos = self.cadeia_processamento.processar(dados_dicionario)
+            dados_limpos = self.model.processar_dados(dados_dicionario)
 
             # 2. Prepara lista APENAS com o que a IA foi treinada
             # Ordem do script de treino: 
