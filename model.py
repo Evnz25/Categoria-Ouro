@@ -4,10 +4,13 @@ import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
+import joblib
+import os
 
-from elo_01 import Elo_01
-from elo_02 import Elo_02
-from elo_03 import Elo_03
+from elo_01 import Elo01
+from elo_02 import Elo02
+from elo_03 import Elo03
+from elo_04 import Elo04
 
 class Model():
     def __init__(self):
@@ -15,10 +18,10 @@ class Model():
         self.db = self.meucliente["ClassificacaoOuro"]
         self.registros = self.db["registros"]
 
-        self.e0 = Elo_01(self) #valida vazio
-        self.e1 = Elo_02(self) #Nome maiusculo
-        self.e2 = Elo_03(self) #Virgula para ponto  
-        self.e3 = Elo_04(self) #texto -> float
+        self.e0 = Elo01(self) #valida vazio
+        self.e1 = Elo02(self) #Nome maiusculo
+        self.e2 = Elo03(self) #Virgula para ponto  
+        self.e3 = Elo04(self) #texto -> float
 
         self.e0.set_next(self.e1)
         self.e1.set_next(self.e2)
@@ -185,43 +188,31 @@ class Model():
     def calcular_classificacao_ia(self, dados_novos_lista):
         """
         Calcula a classificação baseado nas 8 medidas físicas.
-        Espera: [Peso, Altura, Flex, Abd, Arr, SaltoH, SaltoV, Quad]
+        Recebe uma LISTA pronta: [Peso, Altura, Flex, Abd, Arr, SaltoH, SaltoV, Quad]
         """
         if not self.ia_carregada:
             return "Erro: IA não treinada"
 
-        if "erro" in dados_dict_limpos:
-            return f"Erro nos dados: {dados_dict_limpos['erro']}"
-
         try:
-            lista_ia = [
-                dados_dict_limpos["Peso"],
-                dados_dict_limpos["Altura"],
-                dados_dict_limpos["Flexibilidade"],
-                dados_dict_limpos["Abdominal"],
-                dados_dict_limpos["Arremesso"],
-                dados_dict_limpos["SaltoHor"],
-                dados_dict_limpos["SaltoVer"],
-                dados_dict_limpos["Quadrado"]
-            ]
+            # CORREÇÃO: Usamos direto a lista que recebemos como argumento!
+            # Não tentamos acessar 'dados_dict_limpos' aqui.
+            
+            # Transforma em array numpy 2D
+            dados_array = np.array([dados_novos_lista])
 
-            # Transforma em array numpy
-            dados_array = np.array([lista_ia])
-
-            # Normalizar
+            # Normalizar (usando a régua do treino)
             dados_scaled = self.scaler.transform(dados_array)
 
             # Aplicar Pesos
             dados_pond = dados_scaled * self.pesos
 
-            # Predizer
+            # Predizer (K-Means)
             cluster_id = self.kmeans.predict(dados_pond)[0]
 
-            # Traduzir e Retornar
+            # Traduzir ID para Nome
             return self.mapa_nomes[cluster_id]
 
         except Exception as e:
             print(f"Erro na predição: {e}")
             return "Erro no Cálculo"
-
 

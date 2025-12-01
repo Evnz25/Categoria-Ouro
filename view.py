@@ -110,20 +110,19 @@ class View():
         self.entryQuadrado.grid(row=7, column=1, sticky="w", padx=10)
 
         tk.Label(form_container, text="CLASSIFICAÇÃO:", **lbl_config).grid(row=8, column=0, sticky='w', pady=10)
-        self.lbl_resultado_valor = tk.Label(
+        # --- CORREÇÃO: Criar Entry com o nome correto ---
+        self.entryClassificacao = ttk.Entry(
             form_container, 
-            text="",                # Começa vazio
-            bg="#DBA457", 
-            fg="#333333",           # Cor do texto (escuro para destaque)
-            font=("Inter", 14, "bold") 
+            font=("Inter", 10, "bold"),
+            state="readonly" # Começa travado para o usuário não digitar
         )
-        self.lbl_resultado_valor.grid(row=8, column=1, sticky="w", padx=10)
+        self.entryClassificacao.grid(row=8, column=1, sticky="ew", padx=10)
 
-        botoes_frame = tk.Frame(self.tela_insercao, bg="#DBA457")
-        botoes_frame.pack(side="bottom", fill="x", padx=40, pady=30)
+        self.botoes_frame = tk.Frame(self.tela_insercao, bg="#DBA457")
+        self.botoes_frame.pack(side="bottom", fill="x", padx=40, pady=30)
 
         btn_voltar = tk.Button(
-            botoes_frame, 
+            self.botoes_frame, 
             text="VOLTAR", 
             bg="#333333", 
             fg="white",   
@@ -134,7 +133,7 @@ class View():
         btn_voltar.pack(side="left")
         
         self.btn_cadastrar = tk.Button(
-            botoes_frame, 
+            self.botoes_frame, 
             text="CALCULAR", 
             bg="#333333", 
             fg="white",
@@ -152,7 +151,7 @@ class View():
             fg="white", 
             font=("Inter", 10, "bold"),
             bd=0, padx=20, pady=8,
-            command=self.salvar_no_banco # Nova função
+            command=self.salvar_registros # Nova função
         )
 
 

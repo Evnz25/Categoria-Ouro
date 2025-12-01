@@ -1,6 +1,6 @@
 from elo import Elo
 
-class Elo_01(Elo):
+class Elo01(Elo):
     def processar(self, dados):
         for chave, valor in dados.items():
             if valor == "" or valor is None:
