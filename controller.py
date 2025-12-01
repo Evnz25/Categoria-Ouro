@@ -22,3 +22,31 @@ class Controller():
     
     def deletar_registro_controller(self, registro_id):
         return self.model.deletar_registro(registro_id)
+    
+    def calcular_classificacao(self, dados_dicionario):
+        try:
+            # 1. Passa pela cadeia de limpeza (Elos)
+            dados_limpos = self.cadeia_processamento.processar(dados_dicionario)
+
+            # 2. Prepara lista APENAS com o que a IA foi treinada
+            # Ordem do script de treino: 
+            # ['Peso', 'Altura', 'Flexibilidade', 'Abdominal', 'Arremesso', 'SaltoHor', 'SaltoVer', 'Quadrado']
+            
+            lista_para_ia = [
+                dados_limpos["Peso"],
+                dados_limpos["Altura"],
+                dados_limpos["Flexibilidade"],
+                dados_limpos["Abdominal"],
+                dados_limpos["Arremesso"],
+                dados_limpos["SaltoHor"],
+                dados_limpos["SaltoVer"],
+                dados_limpos["Quadrado"]
+            ]
+
+            # 3. Chama o Model
+            resultado = self.model.calcular_classificacao_ia(lista_para_ia)
+            
+            return resultado, dados_limpos["Nome"]
+
+        except Exception as e:
+            return f"Erro: {e}", None

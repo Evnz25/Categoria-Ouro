@@ -110,6 +110,14 @@ class View():
         self.entryQuadrado.grid(row=7, column=1, sticky="w", padx=10)
 
         tk.Label(form_container, text="CLASSIFICAÇÃO:", **lbl_config).grid(row=8, column=0, sticky='w', pady=10)
+        self.lbl_resultado_valor = tk.Label(
+            form_container, 
+            text="",                # Começa vazio
+            bg="#DBA457", 
+            fg="#333333",           # Cor do texto (escuro para destaque)
+            font=("Inter", 14, "bold") 
+        )
+        self.lbl_resultado_valor.grid(row=8, column=1, sticky="w", padx=10)
 
         botoes_frame = tk.Frame(self.tela_insercao, bg="#DBA457")
         botoes_frame.pack(side="bottom", fill="x", padx=40, pady=30)
@@ -136,7 +144,16 @@ class View():
         )
         self.btn_cadastrar.pack(side="right") 
 
-        #btn de salvar
+        
+        self.btn_salvar_banco = tk.Button(
+            self.botoes_frame,
+            text="SALVAR NO BANCO",
+            bg="#006400", # Verde escuro para diferenciar
+            fg="white", 
+            font=("Inter", 10, "bold"),
+            bd=0, padx=20, pady=8,
+            command=self.salvar_no_banco # Nova função
+        )
 
     def criar_tela_registro(self):
         self.tela_registro = tk.Frame(self.container, bg="#DBA457")
@@ -205,17 +222,110 @@ class View():
         )
         btn_voltar.pack(side='bottom', anchor='w', padx=40, pady=40)
 
+
     def mostrar_tela_inicial(self):
         self.tela_inicial.tkraise()
+
 
     def mostrar_tela_insercao(self):
         self.tela_insercao.tkraise()
 
+
     def mostrar_tela_registro(self):
-        self.tela_registro.tkraise() 
+        self.tela_registro.tkraise()
+
+
+    def exibir_resultado_na_tela(self, classificacao):
+        """
+        Recebe o resultado (ex: "BASQUETE") e coloca no Entry
+        """
+        # 1. Destrava o campo para o código poder escrever
+        self.entryClassificacao.config(state='normal')
+        
+        # 2. Limpa o que tinha antes (caso já tivesse calculado outro)
+        self.entryClassificacao.delete(0, tk.END)
+        
+        # 3. Escreve a nova classificação
+        self.entryClassificacao.insert(0, classificacao)
+        
+        # 4. Trava de novo para o usuário não mexer
+        self.entryClassificacao.config(state='readonly')
+        
+        # 5. Mostra o botão de salvar
+        self.btn_salvar_banco.pack(side="right", padx=10)
+
 
     def calcular(self):
-        pass  # Implementar a lógica de cálculo aqui
+        dados = {
+            'Nome': self.entryNome.get(),
+            'Idade': self.entryIdade.get(),
+            'Peso': self.entryPeso.get(),
+            'Altura': self.entryAltura.get(),
+            'Flexibilidade': self.entryFlexibilidade.get(),
+            'Abdominal': self.entryAbdominal.get(),
+            'Arremesso': self.entryArremesso.get(),
+            'SaltoHor': self.entrySaltoHor.get(),
+            'SaltoVer': self.entrySaltoVert.get(),
+            'Quadrado': self.entryQuadrado.get()
+        }
+
+        resultado = self.controller.calcular_classificacao(dados)
+
+        if resultado and "Erro" in resultado:
+            messagebox.showwarning("Atenção", resultado)
+
+        elif resultado:
+            # 4. Exibir o resultado na tela
+            # Se você estiver usando o Entry Travado (Opção A):
+            self.entryClassificacao.config(state='normal') # Destrava
+            self.entryClassificacao.delete(0, 'end')       # Limpa
+            self.entryClassificacao.insert(0, resultado)   # Escreve
+            self.entryClassificacao.config(state='readonly') # Trava de novo
+
+            self.btn_salvar_banco.pack(side="right", padx=10)
+
+            messagebox.showinfo("Resultado", f"O atleta foi classificado como: {resultado}")
+        
+        else:
+            messagebox.showerror("Erro", "Não foi possível calcular. Verifique os dados.")
+        
+
+    def salvar_registros(self):
+        dados = {
+            'nome': self.entryNome.get(),
+            'idade': self.entryIdade.get(),
+            'peso': self.entryPeso.get(),
+            'altura': self.entryAltura.get(),
+            'flexibilidade': self.entryFlexibilidade.get(),
+            'abdominal': self.entryAbdominal.get(),
+            'arremesso': self.entryArremesso.get(),
+            'saltoHor': self.entrySaltoHor.get(),
+            'saltoVert': self.entrySaltoVert.get(),
+            'quadrado': self.entryQuadrado.get(),
+            'classificacao': self.entryClassificacao.get()
+        }
+
+        sucesso = self.controller.salvar_registro_controller(
+            dados['nome'], dados['idade'], dados['peso'], dados['altura'], dados['flexibilidade'],
+            dados['abdominal'], dados['arremesso'], dados['saltoHor'],
+            dados['saltoVert'], dados['quadrado'], dados['classificacao']
+        )
+
+        if sucesso:
+            messagebox.showinfo("Sucesso", "Registro salvo com sucesso!")
+            self.entryNome.delete(0, 'end')
+            self.entryIdade.delete(0, 'end')
+            self.entryPeso.delete(0, 'end')
+            self.entryAltura.delete(0, 'end')
+            self.entryFlexibilidade.delete(0, 'end')
+            self.entryAbdominal.delete(0, 'end')
+            self.entryArremesso.delete(0, 'end')
+            self.entrySaltoHor.delete(0, 'end')
+            self.entrySaltoVert.delete(0, 'end')
+            self.entryQuadrado.delete(0, 'end')
+            self.entryQuadrado.classificacao(0, 'end')
+        else:
+            messagebox.showerror("Erro no Banco de Dados", "Não foi possível salvar o registro.")
 
 
 if __name__ == "__main__":

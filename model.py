@@ -5,11 +5,45 @@ import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
+from elo_01 import Elo_01
+from elo_02 import Elo_02
+from elo_03 import Elo_03
+
 class Model():
     def __init__(self):
         self.meucliente = pymongo.MongoClient("mongodb://localhost:27017/")
         self.db = self.meucliente["ClassificacaoOuro"]
         self.registros = self.db["registros"]
+
+        self.e0 = Elo_01(self) #valida vazio
+        self.e1 = Elo_02(self) #Nome maiusculo
+        self.e2 = Elo_03(self) #Virgula para ponto
+        self.e3 = Elo_04(self) #texto -> float
+
+        self.e0.set_next(self.e1)
+        self.e1.set_next(self.e2)
+        self.e2.set_next(self.e3)
+
+    # CARREGAR A IA
+        self.ia_carregada = False
+        if os.path.exists("cerebro_ia.pkl"):
+            try:
+                pacote = joblib.load("cerebro_ia.pkl")
+                self.kmeans = pacote["kmeans"]
+                self.scaler = pacote["scaler"]
+                self.pesos = pacote["pesos"]
+                self.mapa_nomes = pacote["mapa_nomes"]
+                self.ia_carregada = True
+                print("IA Carregada com sucesso!")
+            except Exception as e:
+                print(f"Erro ao carregar IA: {e}")
+        else:
+            print("AVISO: Arquivo 'cerebro_ia.pkl' não encontrado.")
+
+
+    def start(self, dados):
+        x = self.e0.run(dados)
+        return x
 
 
     def salvar_registro(self, salvar_nome, salvar_idade, salvar_peso, salvar_altura, salvar_flexibiliade, salvar_abdominal, salvar_arremesso, salvar_salto_horizontal, salvar_salto_vertical, salvar_quadrado, salvar_classificacao):
@@ -144,5 +178,33 @@ class Model():
             print(f"Erro IA: {e}")
             return "Erro no Cálculo"
 
+
+    def calcular_classificacao_ia(self, dados_novos_lista):
+        """
+        Calcula a classificação baseado nas 8 medidas físicas.
+        Espera: [Peso, Altura, Flex, Abd, Arr, SaltoH, SaltoV, Quad]
+        """
+        if not self.ia_carregada:
+            return "Erro: IA não treinada"
+
+        try:
+            # Transforma em array numpy
+            dados_array = np.array([dados_novos_lista])
+
+            # Normalizar (usando a régua do treino)
+            dados_scaled = self.scaler.transform(dados_array)
+
+            # Aplicar Pesos
+            dados_pond = dados_scaled * self.pesos
+
+            # Predizer (K-Means)
+            cluster_id = self.kmeans.predict(dados_pond)[0]
+
+            # Traduzir ID para Nome
+            return self.mapa_nomes[cluster_id]
+
+        except Exception as e:
+            print(f"Erro na predição: {e}")
+            return "Erro no Cálculo"
 
 
