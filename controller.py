@@ -50,3 +50,8 @@ class Controller():
 
         except Exception as e:
             return f"Erro: {e}", None
+        
+    # Adicione este método na classe Controller
+    def processar_dados_para_salvar(self, dados_dicionario):
+        # Chama o Model para passar pelos Elos (Elo02 faz o maiúsculo)
+        return self.model.processar_dados(dados_dicionario)

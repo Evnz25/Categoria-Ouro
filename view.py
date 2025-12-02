@@ -372,6 +372,7 @@ class View():
 
 
     def calcular(self):
+        # 1. Coleta dados
         dados = {
             'Nome': self.entryNome.get(),
             'Idade': self.entryIdade.get(),
@@ -385,63 +386,84 @@ class View():
             'Quadrado': self.entryQuadrado.get()
         }
 
-        resultado = self.controller.calcular_classificacao(dados)
+        # 2. Chama Controller
+        # O retorno é uma TUPLA: (Classificacao, NomeMaiusculo)
+        retorno = self.controller.calcular_classificacao(dados)
+        
+        # Proteção se der erro e retornar None
+        if not retorno or retorno[0] is None:
+             messagebox.showerror("Erro", "Falha no cálculo.")
+             return
 
-        if resultado and "Erro" in resultado:
-            messagebox.showwarning("Atenção", resultado)
+        resultado_classificacao, nome_formatado = retorno
 
-        elif resultado:
-            # 4. Exibir o resultado na tela
-            # Se você estiver usando o Entry Travado (Opção A):
+        # 3. Verifica erros de texto
+        if "Erro" in resultado_classificacao:
+            messagebox.showwarning("Atenção", resultado_classificacao)
+        else:
+            # --- ATUALIZAR TELA ---
+            
+            # A) Atualiza o NOME para Maiúsculo (Visual e para o Save pegar certo depois)
+            if nome_formatado:
+                self.entryNome.delete(0, 'end')
+                self.entryNome.insert(0, nome_formatado)
+
+            # B) Atualiza a CLASSIFICAÇÃO
             self.entryClassificacao.config(state='normal') # Destrava
-            self.entryClassificacao.delete(0, 'end')       # Limpa
-            self.entryClassificacao.insert(0, resultado)   # Escreve
-            self.entryClassificacao.config(state='readonly') # Trava de novo
+            self.entryClassificacao.delete(0, 'end')
+            self.entryClassificacao.insert(0, resultado_classificacao)
+            self.entryClassificacao.config(state='readonly') # Trava
 
+            # C) Mostra botão salvar
             self.btn_salvar_banco.pack(side="right", padx=10)
 
-            messagebox.showinfo("Resultado", f"O atleta foi classificado como: {resultado}")
-        
-        else:
-            messagebox.showerror("Erro", "Não foi possível calcular. Verifique os dados.")
+            # D) Mensagem bonita (agora só com a classificação)
+            messagebox.showinfo("Resultado", f"O atleta foi classificado como: {resultado_classificacao}")
         
 
     def salvar_registros(self):
-        dados = {
-            'nome': self.entryNome.get(),
-            'idade': self.entryIdade.get(),
-            'peso': self.entryPeso.get(),
-            'altura': self.entryAltura.get(),
-            'flexibilidade': self.entryFlexibilidade.get(),
-            'abdominal': self.entryAbdominal.get(),
-            'arremesso': self.entryArremesso.get(),
-            'saltoHor': self.entrySaltoHor.get(),
-            'saltoVert': self.entrySaltoVert.get(),
-            'quadrado': self.entryQuadrado.get(),
-            'classificacao': self.entryClassificacao.get()
+        # 1. Coleta o que está na tela
+        dados_brutos = {
+            'Nome': self.entryNome.get(),
+            'Idade': self.entryIdade.get(),
+            'Peso': self.entryPeso.get(),
+            'Altura': self.entryAltura.get(),
+            'Flexibilidade': self.entryFlexibilidade.get(),
+            'Abdominal': self.entryAbdominal.get(),
+            'Arremesso': self.entryArremesso.get(),
+            'SaltoHor': self.entrySaltoHor.get(),
+            'SaltoVer': self.entrySaltoVert.get(),
+            'Quadrado': self.entryQuadrado.get()
         }
+        
+        # 2. LIMPA OS DADOS ANTES DE SALVAR (Garante Maiúsculo e Pontos)
+        dados_limpos = self.controller.processar_dados_para_salvar(dados_brutos)
+        
+        if "erro" in dados_limpos:
+            messagebox.showerror("Erro", dados_limpos['erro'])
+            return
 
+        # 3. Salva usando os dados LIMPOS
         sucesso = self.controller.salvar_registro_controller(
-            dados['nome'], dados['idade'], dados['peso'], dados['altura'], dados['flexibilidade'],
-            dados['abdominal'], dados['arremesso'], dados['saltoHor'],
-            dados['saltoVert'], dados['quadrado'], dados['classificacao']
+            dados_limpos['Nome'],  # <--- Agora vai Maiúsculo com certeza
+            dados_limpos['Idade'],
+            dados_limpos['Peso'],
+            dados_limpos['Altura'],
+            dados_limpos['Flexibilidade'],
+            dados_limpos['Abdominal'],
+            dados_limpos['Arremesso'],
+            dados_limpos['SaltoHor'],
+            dados_limpos['SaltoVer'],
+            dados_limpos['Quadrado'],
+            self.entryClassificacao.get() # Classificação pega da tela
         )
 
         if sucesso:
             messagebox.showinfo("Sucesso", "Registro salvo com sucesso!")
-            self.entryNome.delete(0, 'end')
-            self.entryIdade.delete(0, 'end')
-            self.entryPeso.delete(0, 'end')
-            self.entryAltura.delete(0, 'end')
-            self.entryFlexibilidade.delete(0, 'end')
-            self.entryAbdominal.delete(0, 'end')
-            self.entryArremesso.delete(0, 'end')
-            self.entrySaltoHor.delete(0, 'end')
-            self.entrySaltoVert.delete(0, 'end')
-            self.entryQuadrado.delete(0, 'end')
-            self.entryQuadrado.classificacao(0, 'end')
+            self.limpar_campos_insercao()
+            self.btn_salvar_banco.pack_forget() # Esconde o botão
         else:
-            messagebox.showerror("Erro no Banco de Dados", "Não foi possível salvar o registro.")
+            messagebox.showerror("Erro", "Não foi possível salvar.")
 
 
 if __name__ == "__main__":

@@ -127,7 +127,7 @@ class Model():
     def deletar_registro(self, registro_id):
         try:
             obj_id = ObjectId(registro_id)
-            exclusao = self.registro.delete_one({"_id": obj_id})
+            exclusao = self.registros.delete_one({"_id": obj_id})
             return exclusao
         except Exception as e:
             print(f"Erro ao deletar o registro: {e}")
@@ -194,14 +194,12 @@ class Model():
             return "Erro: IA não treinada"
 
         try:
-            # CORREÇÃO: Usamos direto a lista que recebemos como argumento!
-            # Não tentamos acessar 'dados_dict_limpos' aqui.
-            
-            # Transforma em array numpy 2D
-            dados_array = np.array([dados_novos_lista])
+            # CORREÇÃO DO AVISO: Criar DataFrame com os nomes das colunas
+            colunas = ['Peso', 'Altura', 'Flexibilidade', 'Abdominal', 'Arremesso', 'SaltoHor', 'SaltoVer', 'Quadrado']
+            dados_df = pd.DataFrame([dados_novos_lista], columns=colunas)
 
-            # Normalizar (usando a régua do treino)
-            dados_scaled = self.scaler.transform(dados_array)
+            # Normalizar (agora passando um DF com nomes, igual ao treino)
+            dados_scaled = self.scaler.transform(dados_df)
 
             # Aplicar Pesos
             dados_pond = dados_scaled * self.pesos
