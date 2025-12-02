@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from controller import Controller
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 class View():
     def __init__(self):
@@ -59,6 +61,13 @@ class View():
             fg="white", font=("Inter", 10, "bold"),
             bd=0, padx=20, pady=8,
             command=self.acao_recalibrar).pack(side="left", padx=10)
+        
+        tk.Button(botoes_frame,
+            text="VER GRÁFICO",
+            bg="#800080", # Roxo
+            fg="white", font=("Inter", 10, "bold"),
+            bd=0, padx=20, pady=8,
+            command=self.mostrar_tela_grafico).pack(side="left", padx=10)
 
         tk.Frame(self.tela_inicial, height=10, bg="black").pack(fill='x')
 
@@ -422,6 +431,62 @@ class View():
             self.btn_salvar_banco.pack_forget()
         else:
             messagebox.showerror("Erro", "Não foi possível salvar.")
+
+    def mostrar_tela_grafico(self):
+            # Limpa tela anterior
+            if hasattr(self, 'tela_grafico'):
+                self.tela_grafico.destroy()
+                
+            self.tela_grafico = tk.Frame(self.container, bg="white")
+            self.tela_grafico.grid(row=0, column=0, sticky='nsew')
+            
+            tk.Button(self.tela_grafico, text="VOLTAR", bg="#333333", fg="white", 
+                    command=self.mostrar_tela_inicial).pack(anchor='nw', padx=20, pady=10)
+
+            # --- MUDANÇA: Chama o método do PCA ---
+            df_atletas, df_centroides = self.controller.obter_dados_pca_controller()
+            
+            if df_atletas is None:
+                tk.Label(self.tela_grafico, text=f"Erro: {df_centroides}", bg="white").pack()
+                return
+
+            # --- DESENHAR GRÁFICO PCA ---
+            fig = Figure(figsize=(10, 6), dpi=100)
+            ax = fig.add_subplot(111)
+
+            # Cores fixas para manter padrão
+            cores = {'BASQUETE': 'purple', 'FUTEBOL': 'green', 'CAPOEIRA': 'orange'}
+
+            # 1. Plotar Atletas (PC1 x PC2)
+            for esporte, cor in cores.items():
+                grupo = df_atletas[df_atletas['Classificacao'] == esporte]
+                if not grupo.empty:
+                    ax.scatter(grupo['PC1'], grupo['PC2'], c=cor, label=esporte, s=100, alpha=0.7, edgecolors='white')
+
+            # 2. Plotar Centróides (X Vermelho)
+            ax.scatter(df_centroides['PC1'], df_centroides['PC2'], 
+                    c='red', s=300, marker='X', label='Centro Ideal', edgecolors='black', linewidths=2)
+
+            # 3. Nomes nos Centróides
+            for _, row in df_centroides.iterrows():
+                ax.text(row['PC1'], row['PC2'] + 0.3, row['NomeEsporte'], 
+                        horizontalalignment='center', fontweight='bold',
+                        bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
+
+            # 4. Nomes dos Atletas (Opcional - pode poluir se tiver muitos)
+            # Vamos colocar só em alguns para exemplo ou deixar sem
+            # for _, row in df_atletas.iterrows():
+            #     ax.text(row['PC1'], row['PC2']+0.1, row['Nome'].split()[0], fontsize=8, alpha=0.7)
+
+            ax.set_title("Mapa de Similaridade Física (PCA)", fontsize=14)
+            ax.set_xlabel("Dimensão 1 (Tendência de Força/Altura)")
+            ax.set_ylabel("Dimensão 2 (Tendência de Agilidade/Flexibilidade)")
+            ax.legend()
+            ax.grid(True, linestyle='--', alpha=0.3)
+
+            canvas = FigureCanvasTkAgg(fig, master=self.tela_grafico)
+            canvas.draw()
+            canvas.get_tk_widget().pack(fill='both', expand=True, padx=20, pady=10)
 
 
 if __name__ == "__main__":

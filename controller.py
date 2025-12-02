@@ -50,3 +50,6 @@ class Controller():
     
     def recalibrar_ia_controller(self):
         return self.model.retreinar_ia()
+    
+    def obter_dados_pca_controller(self):
+        return self.model.obter_dados_pca()

@@ -7,6 +7,7 @@ from sklearn.preprocessing import StandardScaler
 import joblib
 import os
 from itertools import permutations
+from sklearn.decomposition import PCA
 
 from elo_01 import VerificarPreenchimentoElo
 from elo_02 import NomeMaiusculoElo
@@ -41,9 +42,9 @@ class Model():
 
     def carregar_ia_do_disco(self):
         self.ia_carregada = False
-        if os.path.exists("cerebro_ia.pkl"):
+        if os.path.exists("treinamento_ia.pkl"):
             try:
-                pacote = joblib.load("cerebro_ia.pkl")
+                pacote = joblib.load("treinamento_ia.pkl")
                 self.kmeans = pacote["kmeans"]
                 self.scaler = pacote["scaler"]
                 self.pesos = pacote["pesos"]
@@ -180,7 +181,7 @@ class Model():
                 "mapa_nomes": mapa_nomes,
                 "colunas": colunas_treino
             }
-            joblib.dump(pacote_ia, "cerebro_ia.pkl")
+            joblib.dump(pacote_ia, "treinamento_ia.pkl")
             
             self.carregar_ia_do_disco()
             
@@ -240,4 +241,50 @@ class Model():
         except Exception as e:
             print(f"Erro na predição: {e}")
             return "Erro no Cálculo"
+    
+    def obter_dados_pca(self):
+        """
+        Calcula o PCA (PC1 e PC2) para visualização completa dos clusters.
+        """
+        if not self.ia_carregada:
+            return None, "IA não carregada."
+
+        try:
+            # 1. Buscar dados (8 colunas físicas)
+            colunas_treino = ['Peso', 'Altura', 'Flexibilidade', 'Abdominal', 'Arremesso', 'SaltoHor', 'SaltoVer', 'Quadrado']
+            # Busca também o Nome para exibir no gráfico
+            cursor = self.registros.find({}, {"_id": 0, "Nome": 1, **{k:1 for k in colunas_treino}})
+            dados = list(cursor)
+            
+            if not dados: return None, "Sem dados."
+
+            df = pd.DataFrame(dados)
+            for c in colunas_treino: df[c] = pd.to_numeric(df[c], errors='coerce')
+            df = df.dropna(subset=colunas_treino)
+
+            # 2. Preparar Dados (Scaler + Pesos)
+            X = df[colunas_treino].copy()
+            X_scaled = self.scaler.transform(X)
+            X_pond = X_scaled * self.pesos # Usa os dados PONDERADOS para o PCA refletir a IA
+
+            # 3. Classificar
+            clusters = self.kmeans.predict(X_pond)
+            df['Classificacao'] = [self.mapa_nomes[c] for c in clusters]
+
+            # 4. CALCULAR PCA (A Mágica)
+            pca = PCA(n_components=2)
+            componentes = pca.fit_transform(X_pond)
+            
+            df['PC1'] = componentes[:, 0]
+            df['PC2'] = componentes[:, 1]
+
+            # 5. Calcular PCA dos Centróides (Para marcar o X)
+            centroides_pca = pca.transform(self.kmeans.cluster_centers_)
+            df_centroides = pd.DataFrame(centroides_pca, columns=['PC1', 'PC2'])
+            df_centroides['NomeEsporte'] = [self.mapa_nomes[i] for i in range(3)]
+
+            return df, df_centroides
+
+        except Exception as e:
+            return None, f"Erro PCA: {e}"
 
