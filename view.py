@@ -52,8 +52,22 @@ class View():
             font=("Inter", 10, "bold"),
             bd=0, padx=20, pady=8,
             command=self.mostrar_tela_registro).pack(side="left", padx=10)
+        
+        tk.Button(botoes_frame,
+            text="RECALIBRAR IA",
+            bg="#0056b3", # Azul
+            fg="white", font=("Inter", 10, "bold"),
+            bd=0, padx=20, pady=8,
+            command=self.acao_recalibrar).pack(side="left", padx=10)
 
         tk.Frame(self.tela_inicial, height=10, bg="black").pack(fill='x')
+
+
+    def acao_recalibrar(self):
+        resposta = messagebox.askyesno("Confirmar", "Deseja recalibrar a IA usando todos os dados salvos no banco?\nIsso pode melhorar a precisão se houver novos registros.")
+        if resposta:
+            mensagem = self.controller.recalibrar_ia_controller()
+            messagebox.showinfo("Status da IA", mensagem)
 
     def criar_tela_insercao(self):
         self.tela_insercao = tk.Frame(self.container, bg="#DBA457")
@@ -110,11 +124,10 @@ class View():
         self.entryQuadrado.grid(row=7, column=1, sticky="w", padx=10)
 
         tk.Label(form_container, text="CLASSIFICAÇÃO:", **lbl_config).grid(row=8, column=0, sticky='w', pady=10)
-        # --- CORREÇÃO: Criar Entry com o nome correto ---
         self.entryClassificacao = ttk.Entry(
             form_container, 
             font=("Inter", 10, "bold"),
-            state="readonly" # Começa travado para o usuário não digitar
+            state="readonly" 
         )
         self.entryClassificacao.grid(row=8, column=1, sticky="ew", padx=10)
 
@@ -147,11 +160,11 @@ class View():
         self.btn_salvar_banco = tk.Button(
             self.botoes_frame,
             text="SALVAR NO BANCO",
-            bg="#006400", # Verde escuro para diferenciar
+            bg="#006400", 
             fg="white", 
             font=("Inter", 10, "bold"),
             bd=0, padx=20, pady=8,
-            command=self.salvar_registros # Nova função
+            command=self.salvar_registros 
         )
 
 
@@ -159,16 +172,13 @@ class View():
         self.tela_registro = tk.Frame(self.container, bg="#DBA457")
         self.tela_registro.grid(row=0, column=0, sticky='nsew')
 
-        # --- CABEÇALHO ---
         cabeçalho_frame = tk.Frame(self.tela_registro, bg="#DBA457")
         cabeçalho_frame.pack(pady=20, padx=40, fill='x')
         ttk.Label(cabeçalho_frame, text="REGISTROS", font=("Inter", 28, "bold"), background="#DBA457").pack(anchor='w')
 
-        # --- FILTROS ---
         frame_filtro = tk.Frame(self.tela_registro, bg="#DBA457")
         frame_filtro.pack(fill='x', padx=40, pady=10)
         
-        # (Seus filtros continuam aqui...)
         ttk.Label(frame_filtro, text="CATEGORIA", font=("Inter", 10, "bold"), background="#DBA457").pack(anchor='w')
         linha_filtro = tk.Frame(frame_filtro, bg="#DBA457")
         linha_filtro.pack(fill='x', pady=5)
@@ -180,22 +190,17 @@ class View():
         btn_filtrar = tk.Button(linha_filtro, text="FILTRAR", bg="#333333", fg="white", bd=0, padx=15, command=self.filtrar_lista)
         btn_filtrar.pack(side='left', padx=10)
 
-        # --- ÁREA DE SCROLL (IMPORTANTE PARA LISTA) ---
-        # Criamos um Canvas para poder rolar a página
         self.canvas_area = tk.Canvas(self.tela_registro, bg="#DBA457", highlightthickness=0)
         self.scrollbar = ttk.Scrollbar(self.tela_registro, orient="vertical", command=self.canvas_area.yview)
         
-        # Frame que vai conter os cards (dentro do canvas)
         self.frame_lista_cards = tk.Frame(self.canvas_area, bg="#DBA457")
         
-        # Configuração do Scroll
         self.canvas_area.create_window((0, 0), window=self.frame_lista_cards, anchor="nw")
         self.canvas_area.configure(yscrollcommand=self.scrollbar.set)
         
         self.canvas_area.pack(side="left", fill="both", expand=True, padx=40)
         self.scrollbar.pack(side="right", fill="y")
 
-        # Atualiza o tamanho do scroll quando adicionamos coisas
         self.frame_lista_cards.bind("<Configure>", lambda e: self.canvas_area.configure(scrollregion=self.canvas_area.bbox("all")))
 
         btn_voltar = tk.Button(
@@ -220,22 +225,14 @@ class View():
 
 
     def mostrar_tela_registro(self):
-        # Sempre que mostrar a tela, recarrega a lista do banco
         self.atualizar_lista_registros()
         self.tela_registro.tkraise()
 
     
     def atualizar_lista_registros(self, filtro=None):
-        """
-        1. Limpa a lista atual
-        2. Busca no Controller
-        3. Cria os Cards
-        """
-        # Limpar widgets antigos
         for widget in self.frame_lista_cards.winfo_children():
             widget.destroy()
 
-        # Buscar dados (Se tiver filtro usa o filtrado, senão pega tudo)
         if filtro and filtro != "GERAL":
             registros = self.controller.listar_registros_filtrado_controller({"Classificacao": filtro})
         else:
@@ -245,23 +242,18 @@ class View():
             tk.Label(self.frame_lista_cards, text="Nenhum registro encontrado.", bg="#DBA457").pack(pady=20)
             return
 
-        # Criar Cards
         for item in registros:
             self.criar_card_atleta(item)
 
     def criar_card_atleta(self, dados_atleta):
-        """ Cria o visual do card branco """
         card = tk.Frame(self.frame_lista_cards, bg="white")
         card.pack(fill='x', pady=5, ipady=5)
 
-        # Evento de Clique: Ao clicar no Frame, carrega o atleta
-        # Usamos lambda para passar os dados desse atleta específico
         card.bind("<Button-1>", lambda e, d=dados_atleta: self.carregar_atleta_para_edicao(d))
 
         infos_card = tk.Frame(card, bg="white")
         infos_card.pack(side='left', padx=15, pady=5)
         
-        # Precisamos propagar o clique para os labels também
         lbl_nome = tk.Label(infos_card, text=f"NOME : {dados_atleta.get('Nome', '--')}", bg="white", anchor="w", font=("Inter", 10, "bold"))
         lbl_nome.pack(fill='x')
         
@@ -271,11 +263,9 @@ class View():
         lbl_class = tk.Label(infos_card, text=f"CLASSIFICAÇÃO: {dados_atleta.get('Classificacao', '--')}", bg="white", anchor="w", fg="blue")
         lbl_class.pack(fill='x')
 
-        # Bind no clique dos textos também
         for w in [infos_card, lbl_nome, lbl_idade, lbl_class]:
             w.bind("<Button-1>", lambda e, d=dados_atleta: self.carregar_atleta_para_edicao(d))
 
-        # Botão Excluir (Funcional)
         btn_excluir = tk.Button(
             card, 
             text="EXCLUIR", 
@@ -286,17 +276,10 @@ class View():
 
     
     def carregar_atleta_para_edicao(self, dados):
-        """
-        Pega os dados do dicionário e preenche a tela de inserção
-        """
-        # 1. Muda para a tela de inserção
         self.mostrar_tela_insercao()
         
-        # 2. Limpa os campos
-        self.limpar_campos_insercao() # Crie essa função auxiliar ou faça linha a linha
+        self.limpar_campos_insercao()
         
-        # 3. Preenche os campos
-        # Dica: O MongoDB retorna números, converta para string se precisar
         self.entryNome.insert(0, dados.get('Nome', ''))
         self.entryIdade.insert(0, str(dados.get('Idade', '')))
         self.entryPeso.insert(0, str(dados.get('Peso', '')))
@@ -308,16 +291,13 @@ class View():
         self.entrySaltoVert.insert(0, str(dados.get('SaltoVer', '')))
         self.entryQuadrado.insert(0, str(dados.get('Quadrado', '')))
         
-        # 4. Preenche a Classificação (usando a lógica do Entry Travado)
         self.entryClassificacao.config(state='normal')
         self.entryClassificacao.delete(0, 'end')
         self.entryClassificacao.insert(0, dados.get('Classificacao', ''))
         self.entryClassificacao.config(state='readonly')
 
-        # 5. Guarda o ID para saber que é uma edição (se quiser implementar Update depois)
         self.id_atleta_em_edicao = dados.get('_id')
         
-        # Mostra o botão salvar (talvez você queira mudar o texto para "ATUALIZAR" no futuro)
         self.btn_salvar_banco.pack(side="right", padx=10)
 
     
@@ -352,27 +332,18 @@ class View():
 
 
     def exibir_resultado_na_tela(self, classificacao):
-        """
-        Recebe o resultado (ex: "BASQUETE") e coloca no Entry
-        """
-        # 1. Destrava o campo para o código poder escrever
         self.entryClassificacao.config(state='normal')
         
-        # 2. Limpa o que tinha antes (caso já tivesse calculado outro)
         self.entryClassificacao.delete(0, tk.END)
         
-        # 3. Escreve a nova classificação
         self.entryClassificacao.insert(0, classificacao)
         
-        # 4. Trava de novo para o usuário não mexer
         self.entryClassificacao.config(state='readonly')
         
-        # 5. Mostra o botão de salvar
         self.btn_salvar_banco.pack(side="right", padx=10)
 
 
     def calcular(self):
-        # 1. Coleta dados
         dados = {
             'Nome': self.entryNome.get(),
             'Idade': self.entryIdade.get(),
@@ -386,43 +357,32 @@ class View():
             'Quadrado': self.entryQuadrado.get()
         }
 
-        # 2. Chama Controller
-        # O retorno é uma TUPLA: (Classificacao, NomeMaiusculo)
         retorno = self.controller.calcular_classificacao(dados)
         
-        # Proteção se der erro e retornar None
         if not retorno or retorno[0] is None:
              messagebox.showerror("Erro", "Falha no cálculo.")
              return
 
         resultado_classificacao, nome_formatado = retorno
 
-        # 3. Verifica erros de texto
         if "Erro" in resultado_classificacao:
             messagebox.showwarning("Atenção", resultado_classificacao)
         else:
-            # --- ATUALIZAR TELA ---
-            
-            # A) Atualiza o NOME para Maiúsculo (Visual e para o Save pegar certo depois)
             if nome_formatado:
                 self.entryNome.delete(0, 'end')
                 self.entryNome.insert(0, nome_formatado)
 
-            # B) Atualiza a CLASSIFICAÇÃO
             self.entryClassificacao.config(state='normal') # Destrava
             self.entryClassificacao.delete(0, 'end')
             self.entryClassificacao.insert(0, resultado_classificacao)
             self.entryClassificacao.config(state='readonly') # Trava
 
-            # C) Mostra botão salvar
             self.btn_salvar_banco.pack(side="right", padx=10)
 
-            # D) Mensagem bonita (agora só com a classificação)
             messagebox.showinfo("Resultado", f"O atleta foi classificado como: {resultado_classificacao}")
         
 
     def salvar_registros(self):
-        # 1. Coleta o que está na tela
         dados_brutos = {
             'Nome': self.entryNome.get(),
             'Idade': self.entryIdade.get(),
@@ -436,16 +396,14 @@ class View():
             'Quadrado': self.entryQuadrado.get()
         }
         
-        # 2. LIMPA OS DADOS ANTES DE SALVAR (Garante Maiúsculo e Pontos)
         dados_limpos = self.controller.processar_dados_para_salvar(dados_brutos)
         
         if "erro" in dados_limpos:
             messagebox.showerror("Erro", dados_limpos['erro'])
             return
 
-        # 3. Salva usando os dados LIMPOS
         sucesso = self.controller.salvar_registro_controller(
-            dados_limpos['Nome'],  # <--- Agora vai Maiúsculo com certeza
+            dados_limpos['Nome'],  
             dados_limpos['Idade'],
             dados_limpos['Peso'],
             dados_limpos['Altura'],
@@ -455,13 +413,13 @@ class View():
             dados_limpos['SaltoHor'],
             dados_limpos['SaltoVer'],
             dados_limpos['Quadrado'],
-            self.entryClassificacao.get() # Classificação pega da tela
+            self.entryClassificacao.get() 
         )
 
         if sucesso:
             messagebox.showinfo("Sucesso", "Registro salvo com sucesso!")
             self.limpar_campos_insercao()
-            self.btn_salvar_banco.pack_forget() # Esconde o botão
+            self.btn_salvar_banco.pack_forget()
         else:
             messagebox.showerror("Erro", "Não foi possível salvar.")
 

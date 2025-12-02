@@ -5,7 +5,6 @@ from sklearn.preprocessing import StandardScaler
 from itertools import permutations
 import joblib
 
-# --- CONFIGURAÇÕES ---
 ARQUIVO_CSV = "Dados_do_projeto_CAOO.csv"
 ARQUIVO_SAIDA = "cerebro_ia.pkl"
 
@@ -70,7 +69,6 @@ def treinar_e_salvar():
         'S. horizontal': 'SaltoHor', 'S.vertical': 'SaltoVer', 'Quadrado 4x4': 'Quadrado'
     })
     
-    # Lista EXATA de colunas que seu programa vai usar
     colunas_treino = ['Peso', 'Altura', 'Flexibilidade', 'Abdominal', 'Arremesso', 'SaltoHor', 'SaltoVer', 'Quadrado']
     
     for c in colunas_treino: 
@@ -78,15 +76,12 @@ def treinar_e_salvar():
 
     X = df[colunas_treino].copy()
     
-    # Remove qualquer linha com dados faltando (treino apenas com dados perfeitos)
     X = X.dropna()
     print(f"Alunos usados no treino: {len(X)}")
     
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
     
-    # Pesos ajustados para as 8 colunas (removido peso da idade)
-    # Ordem: [Peso, Altura, Flex, Abd, Arr, SaltoH, SaltoV, Quad]
     pesos = np.array([0.5, 1.0, 2.0, 1.0, 3.0, 3.0, 3.0, 2.0])
     
     X_pond = X_scaled * pesos
@@ -103,7 +98,6 @@ def treinar_e_salvar():
         "pesos": pesos,
         "mapa_nomes": mapa_nomes,
         "colunas": colunas_treino
-        # Note: Removi 'imputer' daqui
     }
     
     joblib.dump(pacote_ia, ARQUIVO_SAIDA)

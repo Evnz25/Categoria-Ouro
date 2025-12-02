@@ -1,6 +1,6 @@
 from elo import Elo
 
-class Elo03(Elo):
+class SubstituirVirgulaElo(Elo):
     def processar(self, dados):
         campos_numericos = [
             "Idade", "Peso", "Altura", "Flexibilidade", "Abdominal", 

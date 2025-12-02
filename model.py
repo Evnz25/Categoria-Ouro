@@ -6,11 +6,19 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 import joblib
 import os
+from itertools import permutations
 
-from elo_01 import Elo01
-from elo_02 import Elo02
-from elo_03 import Elo03
-from elo_04 import Elo04
+from elo_01 import VerificarPreenchimentoElo
+from elo_02 import NomeMaiusculoElo
+from elo_03 import SubstituirVirgulaElo
+from elo_04 import TransformaFloatElo
+from elo_05 import RegularDistanciaElo
+
+PERFIS_ALVO = {
+    "BASQUETE": { "Arremesso": 1, "SaltoHor": 1, "SaltoVer": 1, "Altura": 1, "Quadrado": 2 },
+    "FUTEBOL":  { "Quadrado": 1, "Abdominal": 1, "SaltoHor": 2, "Arremesso": 2, "Flexibilidade": 3 },
+    "CAPOEIRA": { "Flexibilidade": 1, "Quadrado": 3, "Arremesso": 3, "SaltoVer": 3, "Peso": 3 }
+}
 
 class Model():
     def __init__(self):
@@ -18,16 +26,20 @@ class Model():
         self.db = self.meucliente["ClassificacaoOuro"]
         self.registros = self.db["registros"]
 
-        self.e0 = Elo01(self) #valida vazio
-        self.e1 = Elo02(self) #Nome maiusculo
-        self.e2 = Elo03(self) #Virgula para ponto  
-        self.e3 = Elo04(self) #texto -> float
+        self.e0 = VerificarPreenchimentoElo(self) #valida vazio
+        self.e1 = NomeMaiusculoElo(self) #Nome maiusculo
+        self.e2 = SubstituirVirgulaElo(self) #Virgula para ponto  
+        self.e3 = TransformaFloatElo(self) #texto -> float
+        self.e4 = RegularDistanciaElo(self) #ajuste de escala
 
         self.e0.set_next(self.e1)
         self.e1.set_next(self.e2)
         self.e2.set_next(self.e3)
+        self.e3.set_next(self.e4)
 
-    # CARREGAR A IA
+        self.carregar_ia_do_disco()
+
+    def carregar_ia_do_disco(self):
         self.ia_carregada = False
         if os.path.exists("cerebro_ia.pkl"):
             try:
@@ -41,7 +53,7 @@ class Model():
             except Exception as e:
                 print(f"Erro ao carregar IA: {e}")
         else:
-            print("AVISO: Arquivo 'cerebro_ia.pkl' não encontrado.")
+            print("AVISO: Arquivo .pkl não encontrado.")
 
 
     def processar_dados(self, dados):
@@ -134,80 +146,95 @@ class Model():
             return None 
         
         
-    def calcular_classificacao_ia_sem_Cerebro(self, dados_novos_lista):
+    def retreinar_ia(self):
         try:
-            cursor = self.registros.find({}, {"_id": 0, "Nome": 0, "Classificacao": 0})
-            dados_treino = list(cursor)
-            
-            if len(dados_treino) < 3:
-                return "Dados insuficientes (Mínimo 3 alunos cadastrados)"
+            cursor = self.registros.find({}, {
+                "Peso": 1, "Altura": 1, "Flexibilidade": 1, "Abdominal": 1, 
+                "Arremesso": 1, "SaltoHor": 1, "SaltoVer": 1, "Quadrado": 1, "_id": 0
+            })
+            dados_db = list(cursor)
 
-            colunas = ["Idade", "Peso", "Altura", "Flexibilidade", "Abdominal", "Arremesso", "SaltoHor", "SaltoVer", "Quadrado"]
-            df = pd.DataFrame(dados_treino)[colunas]
+            if len(dados_db) < 3:
+                return "Erro: Precisa de pelo menos 3 registros no banco para calibrar."
+
+            colunas_treino = ['Peso', 'Altura', 'Flexibilidade', 'Abdominal', 'Arremesso', 'SaltoHor', 'SaltoVer', 'Quadrado']
+            df = pd.DataFrame(dados_db)
+            
+            df = df[colunas_treino].apply(pd.to_numeric, errors='coerce').dropna()
 
             scaler = StandardScaler()
             X_scaled = scaler.fit_transform(df)
 
-            # 4. Aplicar PESOS (Sua customização!)
-            # [Idade, Peso, Altura, Flex, Abd, Arr, SaltoH, SaltoV, Quad]
-            pesos = [1.0, 1.0, 3.0, 1.0, 0.5, 1.0, 1.5, 1.5, 1.0]
-            X_scaled = X_scaled * pesos
+            pesos = np.array([0.5, 1.0, 2.0, 1.0, 3.0, 3.0, 3.0, 2.0])
+            X_pond = X_scaled * pesos
 
             kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)
-            kmeans.fit(X_scaled)
+            kmeans.fit(X_pond)
 
-            centroides = kmeans.cluster_centers_
-            indice_altura = 2 
-            
-            centroides_real = scaler.inverse_transform(centroides / pesos) 
-            
-            grupos = []
-            for i in range(3):
-                grupos.append((i, centroides_real[i][indice_altura]))
-            
-            grupos.sort(key=lambda x: x[1])
-            
-            mapa_nomes = {
-                grupos[0][0]: "CAPOEIRA",  
-                grupos[1][0]: "FUTEBOL",   
-                grupos[2][0]: "BASQUETE"   
+            mapa_nomes = self._identificar_perfis_logica(kmeans, scaler, pesos, colunas_treino)
+
+            pacote_ia = {
+                "kmeans": kmeans,
+                "scaler": scaler,
+                "pesos": pesos,
+                "mapa_nomes": mapa_nomes,
+                "colunas": colunas_treino
             }
-
-            dados_novos_scaled = scaler.transform([dados_novos_lista])
-            dados_novos_scaled = dados_novos_scaled * pesos 
+            joblib.dump(pacote_ia, "cerebro_ia.pkl")
             
-            cluster_predito = kmeans.predict(dados_novos_scaled)[0]
+            self.carregar_ia_do_disco()
             
-            return mapa_nomes[cluster_predito]
-
         except Exception as e:
-            print(f"Erro IA: {e}")
-            return "Erro no Cálculo"
+            return f"Erro no retreino: {e}"
+        
+    def _gerar_ranking(self, df_medias):
+        ranks = df_medias.copy()
+        for col in df_medias.columns:
+            asc = (col == 'Quadrado')
+            ranks[col] = df_medias[col].rank(ascending=asc, method='min').astype(int)
+        return ranks
+    
+    def _identificar_perfis_logica(self, kmeans, scaler, pesos, colunas):
+        centroides = kmeans.cluster_centers_
+        centroides_real = scaler.inverse_transform(centroides / pesos)
+        df_medias = pd.DataFrame(centroides_real, columns=colunas)
+        df_rankings = self._gerar_ranking(df_medias)
+        
+        nomes = list(PERFIS_ALVO.keys())
+        melhor_mapa = None
+        menor_erro = float('inf')
+
+        for tentativa in permutations(nomes):
+            erro_atual = 0
+            for id_grupo, nome_esporte in enumerate(tentativa):
+                perfil_desejado = PERFIS_ALVO[nome_esporte]
+                for col, rank_ideal in perfil_desejado.items():
+                    if col in df_rankings.columns:
+                        rank_real = df_rankings.iloc[id_grupo][col]
+                        peso_erro = 1
+                        if col in ['Arremesso', 'SaltoHor', 'SaltoVer', 'Flexibilidade']: peso_erro = 2
+                        erro_atual += abs(rank_ideal - rank_real) * peso_erro
+            
+            if erro_atual < menor_erro:
+                menor_erro = erro_atual
+                melhor_mapa = {i: nome for i, nome in enumerate(tentativa)}
+        return melhor_mapa
 
 
     def calcular_classificacao_ia(self, dados_novos_lista):
-        """
-        Calcula a classificação baseado nas 8 medidas físicas.
-        Recebe uma LISTA pronta: [Peso, Altura, Flex, Abd, Arr, SaltoH, SaltoV, Quad]
-        """
         if not self.ia_carregada:
             return "Erro: IA não treinada"
 
         try:
-            # CORREÇÃO DO AVISO: Criar DataFrame com os nomes das colunas
             colunas = ['Peso', 'Altura', 'Flexibilidade', 'Abdominal', 'Arremesso', 'SaltoHor', 'SaltoVer', 'Quadrado']
             dados_df = pd.DataFrame([dados_novos_lista], columns=colunas)
 
-            # Normalizar (agora passando um DF com nomes, igual ao treino)
             dados_scaled = self.scaler.transform(dados_df)
 
-            # Aplicar Pesos
             dados_pond = dados_scaled * self.pesos
 
-            # Predizer (K-Means)
             cluster_id = self.kmeans.predict(dados_pond)[0]
 
-            # Traduzir ID para Nome
             return self.mapa_nomes[cluster_id]
 
         except Exception as e:

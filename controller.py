@@ -25,12 +25,7 @@ class Controller():
     
     def calcular_classificacao(self, dados_dicionario):
         try:
-            # 1. Passa pela cadeia de limpeza (Elos)
             dados_limpos = self.model.processar_dados(dados_dicionario)
-
-            # 2. Prepara lista APENAS com o que a IA foi treinada
-            # Ordem do script de treino: 
-            # ['Peso', 'Altura', 'Flexibilidade', 'Abdominal', 'Arremesso', 'SaltoHor', 'SaltoVer', 'Quadrado']
             
             lista_para_ia = [
                 dados_limpos["Peso"],
@@ -43,7 +38,6 @@ class Controller():
                 dados_limpos["Quadrado"]
             ]
 
-            # 3. Chama o Model
             resultado = self.model.calcular_classificacao_ia(lista_para_ia)
             
             return resultado, dados_limpos["Nome"]
@@ -51,7 +45,8 @@ class Controller():
         except Exception as e:
             return f"Erro: {e}", None
         
-    # Adicione este método na classe Controller
     def processar_dados_para_salvar(self, dados_dicionario):
-        # Chama o Model para passar pelos Elos (Elo02 faz o maiúsculo)
         return self.model.processar_dados(dados_dicionario)
+    
+    def recalibrar_ia_controller(self):
+        return self.model.retreinar_ia()
